@@ -1,7 +1,8 @@
 const { Sequelize, DataTypes } = require('sequelize');
-const sequelize = require('./database'); // Certifique-se de que este caminho leva ao arquivo que exporta sua instância do Sequelize.
+const sequelize = require('./database'); // Caminho para a instância do Sequelize
+const conta_bancaria = require('./conta_bancaria');
 
-const Usuario = sequelize.define('usuario', {
+const Usuario = sequelize.define('Usuario', { // Nome do modelo em PascalCase
   ID_Usuario: {
     autoIncrement: true,
     type: DataTypes.INTEGER,
@@ -35,27 +36,27 @@ const Usuario = sequelize.define('usuario', {
     defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
   },
 }, {
-  sequelize,
-  tableName: 'usuario',
-  timestamps: false,
+  tableName: 'usuario', // Nome da tabela no banco
+  timestamps: false, // Desativa campos automáticos de timestamps
   indexes: [
     {
       name: "PRIMARY",
       unique: true,
       using: "BTREE",
-      fields: [
-        { name: "ID_Usuario" },
-      ],
+      fields: [{ name: "ID_Usuario" }],
     },
     {
       name: "email",
       unique: true,
       using: "BTREE",
-      fields: [
-        { name: "email" },
-      ],
+      fields: [{ name: "email" }],
     },
   ],
 });
+
+// Definindo a associação (assume que todos os modelos foram registrados)
+Usuario.associate = (models) => {
+  Usuario.hasOne(models.Conta_Bancaria, { foreignKey: 'ID_Usuario' });
+};
 
 module.exports = Usuario;
