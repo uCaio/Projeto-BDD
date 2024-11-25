@@ -22,14 +22,22 @@
           <th>Saldo Atual</th>
         </tr>
       </thead>
-      <tbody id="contas-list">
-        <!-- Os dados das contas serão carregados aqui -->
+      <tbody>
+        <% contas.forEach(conta => { %>
+          <tr>
+            <td><%= conta.ID_Conta %></td>
+            <td><%= conta.banco %></td>
+            <td><%= conta.agencia %></td>
+            <td><%= conta.conta %></td>
+            <td><%= conta.tipo_conta %></td>
+            <td><%= conta.saldo_atual %></td>
+          </tr>
+        <% }); %>
       </tbody>
     </table>
   </main>
   <footer>
     <p>© 2024 Banco Fortis. Todos os direitos reservados.</p>
   </footer>
-  <script src="/javascripts/contas.js"></script>
 </body>
 </html>

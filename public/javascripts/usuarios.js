@@ -1,9 +1,9 @@
 async function carregarUsuarios() {
   try {
-    const response = await fetch('/usuario'); // Endpoint para obter usuários
+    const response = await fetch('/api/usuarios'); // Nova rota para obter usuários
     const usuarios = await response.json();
     
-    console.log('Usuários carregados:', usuarios);  // Adicionar log de depuração
+    console.log('Usuários carregados:', usuarios);
 
     const usuariosList = document.getElementById('usuarios-list');
     usuarios.forEach(usuario => {

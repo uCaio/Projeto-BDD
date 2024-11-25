@@ -27,18 +27,26 @@ app.get('/landingPage', (req, res) => {
     res.render('landingPage');
 });
 
-app.get('/usuario', (req, res) => {
-    res.render('usuario');
-});
-
-app.get('/contaBancaria', (req, res) => {
-    res.render('contaBancaria');
-});
-
 app.get('/usuario', async (req, res) => {
     try {
         const usuarios = await Usuario.findAll();
-        res.json(usuarios);
+        const contas = await ContaBancaria.findAll();
+
+        // Renderize a página com EJS, passando os dados
+        res.render('usuario', { usuarios, contas });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('<h2>Erro ao buscar os usuários</h2>');
+    }
+});
+
+// Nova rota para retornar usuários como JSON
+app.get('/api/usuarios', async (req, res) => {
+    try {
+        const usuarios = await Usuario.findAll();
+        const contas = await ContaBancaria.findAll();
+          // Renderize a página com EJS, passando os dados
+        res.render('usuario', { usuarios, contas });
     } catch (error) {
         console.error(error);
         res.status(500).send('<h2>Erro ao buscar os usuários</h2>');
@@ -48,12 +56,23 @@ app.get('/usuario', async (req, res) => {
 app.get('/contaBancaria', async (req, res) => {
     try {
       const contas = await ContaBancaria.findAll();
-      res.json(contas);
+       // Renderize a página com EJS, passando os dados
+       res.render('contaBancaria', { contas });
     } catch (error) {
-      console.error(error);
-      res.status(500).send('Erro ao buscar contas bancárias');
+        console.error(error);
+        res.status(500).send('<h2>Erro ao buscar os usuários</h2>');
     }
-  });
+});
+  
+app.get('/api/contaBancaria', async (req, res) => {
+    try {
+        const contas = await ContaBancaria.findAll();
+        res.json(contas);
+      } catch (error) {
+        console.error(error);
+        res.status(500).send('Erro ao buscar contas bancárias');
+      }
+})
 
 app.post('/cadastroUsuario', async (req, res) => {
     try {
@@ -81,6 +100,13 @@ app.post('/cadastroUsuario', async (req, res) => {
         console.error(error);
         res.status(500).send('<h2>Erro no servidor</h2>');
     }
+});
+
+
+Usuario.findAll().then(usuarios => {
+    console.log('Usuários:', JSON.stringify(usuarios, null, 2));
+}).catch(err => {
+    console.error('Erro ao buscar usuários:', err);
 });
 
 // Inicia o servidor
