@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Adicionar Saldo</title>
+</head>
+<body>
+
+    <h2>Saldo Atual</h2>
+<p>
+    <strong>Saldo Atual:</strong>
+    R$ <%= conta.saldo_atual ? parseFloat(conta.saldo_atual).toFixed(2) : 'Erro no saldo' %>
+</p>
+<p><strong>Debug Saldo:</strong> <%= conta.saldo_atual %></p>
+
+
+
+  <h3>Adicionar Saldo</h3>
+  <!-- Exemplo de como o formulario de transação deve ser -->
+  <form method="POST" action="/transacao">
+    <!-- Campo oculto para o usuário ID -->
+    <input type="hidden" name="usuarioId" value="<%= conta.ID_Usuario %>">
+    
+    <!-- Outros campos do formulário, como valor -->
+    <input type="text" name="valor" placeholder="Valor a adicionar">
+  
+    <button type="submit">Adicionar</button>
+  </form>
+</body>
+</html>
