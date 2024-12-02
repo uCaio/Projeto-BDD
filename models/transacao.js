@@ -1,6 +1,5 @@
-const Sequelize = require('sequelize');
 module.exports = function(sequelize, DataTypes) {
-  return sequelize.define('transacao', {
+  return sequelize.define('Transacao', {
     ID_Transacao: {
       autoIncrement: true,
       type: DataTypes.INTEGER,
@@ -42,35 +41,11 @@ module.exports = function(sequelize, DataTypes) {
     },
     forma_pagamento: {
       type: DataTypes.STRING(255),
-      allowNull: falsea
+      allowNull: false
     }
   }, {
     sequelize,
     tableName: 'transacao',
-    timestamps: false,
-    indexes: [
-      {
-        name: "PRIMARY",
-        unique: true,
-        using: "BTREE",
-        fields: [
-          { name: "ID_Transacao" },
-        ]
-      },
-      {
-        name: "ID_Conta",
-        using: "BTREE",
-        fields: [
-          { name: "ID_Conta" },
-        ]
-      },
-      {
-        name: "ID_Categoria",
-        using: "BTREE",
-        fields: [
-          { name: "ID_Categoria" },
-        ]
-      },
-    ]
+    timestamps: false
   });
 };

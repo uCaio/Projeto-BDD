@@ -31,6 +31,9 @@ app.set('views', path.join(__dirname, 'views'));
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
+app.use(express.urlencoded({ extended: true })); // Para processar dados de formulário
+app.use(express.json()); // Para processar dados JSO
+
 // Static Folder
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -45,71 +48,107 @@ app.get('/landingPage', (req, res) => {
 
 // Rota GET para renderizar a página de transação
 app.get('/transacao', async (req, res) => {
-    try {
-        const usuarioId = req.query.usuarioId;
+  try {
+    const usuarios = await Usuario.findAll();
 
-        if (!usuarioId) {
-            return res.status(400).send('Usuário não autenticado ou ID não fornecido');
-        }
+    res.render('transacao', { usuarios });
+  } catch (error) {
+    console.error('Erro ao buscar usuários:', error);
+    res.status(500).send('Erro ao buscar usuários');
+  }
+});
 
-        const conta = await ContaBancaria.findOne({
-            where: { ID_Usuario: usuarioId },
-        });
+app.post('/transacao/realizar', async (req, res) => {
+  const { usuarioOrigem, usuarioDestino, valor } = req.body;
 
-        if (!conta) {
-            return res.status(404).send('Conta não encontrada');
-        }
+  console.log('Dados recebidos para transação:', { usuarioOrigem, usuarioDestino, valor });
 
-        console.log("Conta encontrada:", conta);
+  if (!usuarioOrigem || !usuarioDestino || !valor) {
+    return res.status(400).send('Dados inválidos ou ausentes');
+  }
 
-        res.render('transacao', { conta }); // Envie apenas conta
-    } catch (err) {
-        console.error(err);
-        res.status(500).send('Erro ao buscar a conta');
+  const valorTransacao = parseFloat(valor);
+
+  if (isNaN(valorTransacao) || valorTransacao <= 0) {
+    return res.status(400).send('Valor inválido');
+  }
+
+  try {
+    // Buscar usuários e contas
+    const contaOrigem = await ContaBancaria.findOne({ where: { ID_Usuario: usuarioOrigem } });
+    const contaDestino = await ContaBancaria.findOne({ where: { ID_Usuario: usuarioDestino } });
+
+    if (!contaOrigem || !contaDestino) {
+      return res.status(404).send('Conta de origem ou destino não encontrada');
     }
+
+    // Verificar se o usuário de origem tem saldo suficiente
+    if (contaOrigem.saldo_atual < valorTransacao) {
+      return res.status(400).send('Saldo insuficiente para realizar a transferência');
+    }
+
+    // Realizar a transferência
+    contaOrigem.saldo_atual -= valorTransacao;
+    contaDestino.saldo_atual += valorTransacao;
+
+    // Salvar as contas atualizadas
+    await contaOrigem.save();
+    await contaDestino.save();
+
+    console.log('Transferência realizada com sucesso');
+    res.redirect('/usuario'); // Redireciona para a lista de usuários após a transação
+  } catch (error) {
+    console.error('Erro ao realizar transação:', error);
+    res.status(500).send('Erro ao realizar a transação');
+  }
 });
   
-  // Rota POST para processar a transação
-  app.post('/transacao', async (req, res) => {
-    const usuarioId = req.body.usuarioId;  // Recupera o ID do usuário
-    const valor = req.body.valor;           // Recupera o valor a ser adicionado
-  
-    if (!usuarioId) {
-      return res.status(400).send('ID do usuário não fornecido');
-    }
-  
-    if (!valor) {
-      return res.status(400).send('Valor não fornecido');
-    }
-  
-    try {
-      // Verificar se o usuário existe
-      const usuario = await Usuario.findByPk(usuarioId);
-      if (!usuario) {
-        return res.status(404).send('Usuário não encontrado');
-      }
-  
-      // Verificar se a conta bancária do usuário existe
-      const conta = await ContaBancaria.findOne({ where: { ID_Usuario: usuarioId } });
+app.post('/transacao', async (req, res) => {
+  const { usuarioId, contaId, valor } = req.body;
+
+  console.log('Dados recebidos:', { usuarioId, contaId, valor });
+
+  if (!usuarioId || !contaId || !valor) {
+      return res.status(400).send('Dados inválidos ou ausentes');
+  }
+
+  const valorTransacao = parseFloat(valor);
+
+  if (isNaN(valorTransacao) || valorTransacao <= 0) {
+      return res.status(400).send('Valor inválido');
+  }
+
+  try {
+      const conta = await ContaBancaria.findByPk(contaId);
+
       if (!conta) {
-        return res.status(404).send('Conta não encontrada');
+          return res.status(404).send('Conta não encontrada');
       }
-  
-      // Atualizar o saldo da conta bancária
-      conta.saldo_atual += parseFloat(valor); // Certifique-se de que o valor seja um número
-      await conta.save();  // Salve a conta com o novo saldo
-  
-      // Buscar novamente a conta para garantir que os dados estão atualizados
-      const contaAtualizada = await ContaBancaria.findOne({ where: { ID_Usuario: usuarioId } });
-  
-      // Redirecionar para a página de transação com a conta atualizada
-      res.render('transacao', { conta: contaAtualizada });
-  
-    } catch (err) {
-      console.error(err);
-      res.status(500).send('Erro ao adicionar saldo');
-    }
-  });
+
+      console.log('Saldo atual antes da atualização:', conta.saldo_atual);
+
+      // Garantir que o saldo_atual seja um número
+      conta.saldo_atual = parseFloat(conta.saldo_atual); // Garantir que o saldo seja numérico
+
+      // Atualizando o saldo
+      conta.saldo_atual += valorTransacao;
+
+      console.log('Saldo atualizado para:', conta.saldo_atual);
+
+      await conta.save();
+
+      // Buscar os dados de usuários e contas atualizados
+      const usuarios = await Usuario.findAll();
+      const contas = await ContaBancaria.findAll();
+
+      res.render('usuario', { usuarios, contas });
+  } catch (error) {
+      console.error('Erro ao atualizar o saldo:', error);
+      res.status(500).send('Erro ao atualizar o saldo');
+  }
+});
+
+
 
 app.get('/usuario', async (req, res) => {
     try {

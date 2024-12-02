@@ -66,23 +66,20 @@
             <td><%= conta.agencia %></td>
             <td><%= conta.conta %></td>
             <td><%= conta.tipo_conta %></td>
-            <td><%= conta.saldo_atual %></td>
+            <td><%= parseFloat(conta.saldo_atual).toFixed(2) %></td> <!-- Garantir que o saldo seja um número e com 2 casas decimais -->
             <td>
-              <!-- Formulário para adicionar saldo, enviando para /transacao -->
-              <form action="/transacao" method="POST">
-                <!-- Campo oculto com o ID do usuário -->
-                <input type="hidden" name="usuarioId" value="<%= conta.ID_Usuario %>"> <!-- Agora usa o ID do usuário dinâmico -->
-                
-                <!-- Campo para o valor da transação -->
+              <form action="/transacao" method="POST" enctype="application/x-www-form-urlencoded">
+                <input type="hidden" name="usuarioId" value="<%= conta.ID_Usuario %>">
+                <input type="hidden" name="contaId" value="<%= conta.ID_Conta %>">
                 <input type="number" name="valor" placeholder="Valor a adicionar" required step="0.01">
-              
-
                 <button type="submit">Adicionar Saldo</button>
-              </form>
+            </form>
             </td>
           </tr>
         <% }); %>
       </tbody>
+    <!-- Link para a página de transação -->
+<a href="/transacao">Realizar Transferência</a>  
     </table>
   </main>
   <footer>

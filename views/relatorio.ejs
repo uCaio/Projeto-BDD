@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Relatório Financeiro</title>
+  <link rel="stylesheet" href="/stylesheets/relatorio.css">
+</head>
+<body>
+  <header>
+    <h1>Relatório Financeiro de <%= usuario.nome %></h1>
+    <p>ID do Usuário: <%= usuario.ID_Usuario %></p>
+  </header>
+  <main>
+    <h2>Histórico de Transações</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>ID Transação</th>
+          <th>Banco</th>
+          <th>Conta</th>
+          <th>Categoria</th>
+          <th>Tipo</th>
+          <th>Valor</th>
+          <th>Data da Transação</th>
+          <th>Forma de Pagamento</th>
+          <th>Descrição</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (transacoes.length > 0) { %>
+          <% transacoes.forEach(transacao => { %>
+            <tr>
+              <td><%= transacao.ID_Transacao %></td>
+              <td><%= transacao.ContaBancaria.banco %></td>
+              <td><%= transacao.ContaBancaria.conta %></td>
+              <td><%= transacao.Categoria.nome %></td>
+              <td><%= transacao.tipo %></td>
+              <td><%= transacao.valor.toFixed(2) %></td>
+              <td><%= new Date(transacao.data_transacao).toLocaleDateString() %></td>
+              <td><%= transacao.forma_pagamento %></td>
+              <td><%= transacao.descricao || 'Sem descrição' %></td>
+            </tr>
+          <% }); %>
+        <% } else { %>
+          <tr>
+            <td colspan="9">Nenhuma transação encontrada para este usuário.</td>
+          </tr>
+        <% } %>
+      </tbody>
+    </table>
+  </main>
+  <footer>
+    <p>© 2024 Banco Fortis. Todos os direitos reservados.</p>
+  </footer>
+</body>
+</html>
