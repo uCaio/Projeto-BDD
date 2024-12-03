@@ -34,9 +34,9 @@ const ContaBancaria = sequelize.define('Conta_Bancaria', {
     allowNull: false,
   },
   saldo_atual: {
-    type: DataTypes.DECIMAL(15, 2),
+    type: Sequelize.DECIMAL(10, 2), // Máximo de 10 dígitos no total, com 2 casas decimais
     allowNull: false,
-    defaultValue: 0.00, // Definindo o saldo inicial como 0
+    defaultValue: 0.00,
   },
   data_criacao: {
     type: DataTypes.DATE,

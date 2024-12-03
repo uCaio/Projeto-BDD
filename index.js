@@ -6,6 +6,7 @@ app.use(express.urlencoded({ extended: true })); // Para processar dados de form
 const sequelize = require('./models/database');
 const Usuario = require('./models/usuario');
 const ContaBancaria = require('./models/conta_bancaria'); // Corrija a importação
+const { Sequelize } = require('sequelize'); // Importação do Sequelize no arquivo
 
 // Carregar todas as associações
 Usuario.associate({ ContaBancaria });
@@ -74,32 +75,48 @@ app.post('/transacao/realizar', async (req, res) => {
   }
 
   try {
-    // Buscar usuários e contas
-    const contaOrigem = await ContaBancaria.findOne({ where: { ID_Usuario: usuarioOrigem } });
-    const contaDestino = await ContaBancaria.findOne({ where: { ID_Usuario: usuarioDestino } });
+    // Iniciar uma transação no Sequelize
+    await sequelize.transaction(async (t) => {
+      // Buscar contas de origem e destino
+      const contaOrigem = await ContaBancaria.findOne({ where: { ID_Usuario: usuarioOrigem }, transaction: t });
+      const contaDestino = await ContaBancaria.findOne({ where: { ID_Usuario: usuarioDestino }, transaction: t });
 
-    if (!contaOrigem || !contaDestino) {
-      return res.status(404).send('Conta de origem ou destino não encontrada');
-    }
+      if (!contaOrigem || !contaDestino) {
+        throw new Error('Conta de origem ou destino não encontrada');
+      }
 
-    // Verificar se o usuário de origem tem saldo suficiente
-    if (contaOrigem.saldo_atual < valorTransacao) {
-      return res.status(400).send('Saldo insuficiente para realizar a transferência');
-    }
+      // Converter saldo para números
+      const saldoOrigem = parseFloat(contaOrigem.saldo_atual);
+      const saldoDestino = parseFloat(contaDestino.saldo_atual);
 
-    // Realizar a transferência
-    contaOrigem.saldo_atual -= valorTransacao;
-    contaDestino.saldo_atual += valorTransacao;
+      // Verificar saldo suficiente na conta de origem
+      if (saldoOrigem < valorTransacao) {
+        throw new Error('Saldo insuficiente para realizar a transferência');
+      }
 
-    // Salvar as contas atualizadas
-    await contaOrigem.save();
-    await contaDestino.save();
+      // Atualizar os saldos usando `toFixed` para precisão decimal
+      const novoSaldoOrigem = parseFloat((saldoOrigem - valorTransacao).toFixed(2));
+      const novoSaldoDestino = parseFloat((saldoDestino + valorTransacao).toFixed(2));
+
+      // Atualizar os valores no banco de dados
+      await ContaBancaria.update(
+        { saldo_atual: novoSaldoOrigem },
+        { where: { ID_Usuario: usuarioOrigem }, transaction: t }
+      );
+
+      await ContaBancaria.update(
+        { saldo_atual: novoSaldoDestino },
+        { where: { ID_Usuario: usuarioDestino }, transaction: t }
+      );
+
+      console.log(`Saldo atualizado: Origem (${novoSaldoOrigem}), Destino (${novoSaldoDestino})`);
+    });
 
     console.log('Transferência realizada com sucesso');
-    res.redirect('/usuario'); // Redireciona para a lista de usuários após a transação
+    res.redirect('/usuario');
   } catch (error) {
-    console.error('Erro ao realizar transação:', error);
-    res.status(500).send('Erro ao realizar a transação');
+    console.error('Erro ao realizar transação:', error.message);
+    res.status(500).send(`Erro ao realizar a transação: ${error.message}`);
   }
 });
   
